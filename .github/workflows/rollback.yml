@@ -1,0 +1,55 @@
+```yaml
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Previous Docker image tag"
+        required: true
+        type: string
+
+jobs:
+
+  rollback:
+    name: Rollback Application
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # =========================
+      # LOGIN TO DOCKER HUB
+      # =========================
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: umairullah410
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # =========================
+      # PULL PREVIOUS IMAGE
+      # =========================
+      - name: Pull previous image
+        run: |
+          docker pull \
+            umairullah410/flask-cicd-demo:${{ inputs.image_tag }}
+
+      # =========================
+      # RUN PREVIOUS IMAGE
+      # =========================
+      - name: Run previous image
+        run: |
+          docker run -d \
+            --name flask-cicd-rollback \
+            -p 5000:5000 \
+            umairullah410/flask-cicd-demo:${{ inputs.image_tag }}
+
+      # =========================
+      # VERIFY APPLICATION
+      # =========================
+      - name: Verify application
+        run: |
+          sleep 5
+          curl --fail http://localhost:5000/health
+```
+
